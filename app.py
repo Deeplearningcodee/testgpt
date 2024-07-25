@@ -20,7 +20,7 @@ def ask_gpt():
         prompt = f"Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation: {question}"
 
         # Use the OpenAI client to get a chat completion
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "user", "content": prompt}
