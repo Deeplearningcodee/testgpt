@@ -32,7 +32,7 @@ def ask_gpt():
               "content": [
                 {
                   "type": "text",
-                  "text": "Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n\n"
+                  "text": "Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
                 }
               ]
             },
@@ -50,7 +50,7 @@ def ask_gpt():
               "content": [
                 {
                   "type": "text",
-                  "text": "{\n  \"text\": \"Moving forward.\"\n  \"command\":\"forward\"\n}\n"
+                  "text": "{\n\"text\": \"Moving forward.\",\n\"command\": \"move_forward\"\n}"
                 }
               ]
             },
@@ -68,7 +68,7 @@ def ask_gpt():
               "content": [
                 {
                   "type": "text",
-                  "text": "{\n  \"text\": \"Moving backward.\",\n  \"command\": \"backward\"\n}"
+                  "text": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
                 }
               ]
             }
