@@ -13,16 +13,25 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
-    data = request.json
-    question = data['question']
-    
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": question}]
-    )
-    
-    gpt_response = response['choices'][0]['message']['content']
-    return jsonify({'response': gpt_response})
+    try:
+        data = request.json
+        question = data['question']
+        
+        # Debugging: Print received question
+        print(f"Received question: {question}")
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": question}]
+        )
+        
+        gpt_response = response['choices'][0]['message']['content']
+        return jsonify({'response': gpt_response})
+
+    except Exception as e:
+        # Debugging: Print exception details
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(port=4000)
+    app.run(port=5000)
