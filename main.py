@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify
 import openai
+from dotenv import load_dotenv
+load_dotenv()
+import os
+SECRET_KEY = os.getenv("OPENAIKEY")
 
 app = Flask(__name__)
 
 # Replace 'your-api-key' with your OpenAI API key
-openai.api_key = 'sk-proj-rYLLqp3EKXujVjU30TW9T3BlbkFJrbZ5GcwxidDebnIkCc00'
+openai.api_key = SECRET_KEY
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
