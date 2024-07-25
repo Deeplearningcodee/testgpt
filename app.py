@@ -49,5 +49,22 @@ def ask_gpt():
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    try:
+        data = request.json
+        image_data = data['image']
+
+        # Decode the base64 image data
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+
+        # Save the image or process it as needed
+        image.save('screenshot.png')
+
+        return jsonify({'status': 'success', 'message': 'Image received and saved'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
