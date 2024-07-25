@@ -26,6 +26,7 @@ def ask_gpt():
         )
         
         gpt_response = response['choices'][0]['message']['content']
+        print(f"response : {gpt_response}")
         return jsonify({'response': gpt_response})
 
     except Exception as e:
