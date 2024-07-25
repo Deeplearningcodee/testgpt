@@ -1,16 +1,12 @@
 from flask import Flask, request, jsonify
 from openai import OpenAI
 import os
-client = OpenAI()
-
-
-
-# Initialize the Flask application
+from dotenv import load_dotenv
 app = Flask(__name__)
-
-# Load the OpenAI API key from environment variable
-openai.api_key = os.getenv('OPENAI_API_KEY')
-
+# Load environment variables from .env file
+load_dotenv()
+# Initialize the OpenAI client with your API key
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     try:
@@ -25,7 +21,7 @@ def ask_gpt():
 
         # Use the OpenAI client to get a chat completion
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Replace with the model you are using
+            model="gpt-4o",
             messages=[
                 {"role": "user", "content": prompt}
             ],
