@@ -1,7 +1,6 @@
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     try:
-        client = OpenAI()
         data = request.json
         question = data['question']
         
