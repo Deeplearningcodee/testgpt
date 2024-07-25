@@ -61,20 +61,20 @@ def ask_gpt():
               ]
             },
             {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": f"{question}"
-                }
-              ]
-            },
-            {
               "role": "assistant",
               "content": [
                 {
                   "type": "text",
                   "text": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": f"{question}"
                 }
               ]
             }
