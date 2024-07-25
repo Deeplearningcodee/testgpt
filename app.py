@@ -1,16 +1,3 @@
-from flask import Flask, request, jsonify
-from openai import OpenAI
-import os
-from dotenv import load_dotenv
-
-app = Flask(__name__)
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize the OpenAI client with your API key
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     try:
@@ -20,11 +7,14 @@ def ask_gpt():
         # Debugging: Print received question
         print(f"Received question: {question}")
 
+        # Modify the prompt to instruct GPT to respond concisely
+        prompt = f"Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation. : {question}"
+
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
-            model="gpt-4",  # Replace with the model you are using
+            model="gpt-4o",  # Replace with the model you are using
             messages=[
-                {"role": "user", "content": question}
+                {"role": "user", "content": prompt}
             ],
             temperature=1,
             max_tokens=40,
@@ -45,6 +35,3 @@ def ask_gpt():
         # Debugging: Print exception details
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(port=5000)
