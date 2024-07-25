@@ -32,7 +32,8 @@ def ask_gpt():
             frequency_penalty=0,
             presence_penalty=0
         )
-        
+         # Debugging: Print the entire response object
+        print("Full response object:", response)
         # Extract the response text
         gpt_response = response.choices[0].message["content"].strip()
         return jsonify({'response': gpt_response})
