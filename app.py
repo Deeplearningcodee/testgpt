@@ -20,9 +20,6 @@ def ask_gpt():
         # Debugging: Print received question
         print(f"Received question: {question}")
 
-        # Modify the prompt to instruct GPT to respond concisely
-        prompt = f"Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation: {question}"
-
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
           model="gpt-4o",
@@ -32,7 +29,7 @@ def ask_gpt():
               "content": [
                 {
                   "type": "text",
-                  "text": "Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
+                  "text": "Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation also Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
                 }
               ]
             },
@@ -60,6 +57,15 @@ def ask_gpt():
                 {
                   "type": "text",
                   "text": "move backward"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": f"{question}"
                 }
               ]
             },
