@@ -25,10 +25,54 @@ def ask_gpt():
 
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+          model="gpt-4o",
+          messages=[
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n\n"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "move forward"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"text\": \"Moving forward.\"\n  \"command\":\"forward\"\n}\n"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "move backward"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"text\": \"Moving backward.\",\n  \"command\": \"backward\"\n}"
+                }
+              ]
+            }
+          ],
             temperature=1,
             max_tokens=40,
             top_p=1,
