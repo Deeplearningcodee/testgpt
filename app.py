@@ -1,3 +1,15 @@
+from flask import Flask, request, jsonify
+from openai import OpenAI
+client = OpenAI()
+
+import os
+
+# Initialize the Flask application
+app = Flask(__name__)
+
+# Load the OpenAI API key from environment variable
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     try:
@@ -8,11 +20,11 @@ def ask_gpt():
         print(f"Received question: {question}")
 
         # Modify the prompt to instruct GPT to respond concisely
-        prompt = f"Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation. : {question}"
+        prompt = f"Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation: {question}"
 
         # Use the OpenAI client to get a chat completion
-        response = client.chat.completions.create(
-            model="gpt-4o",  # Replace with the model you are using
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # Replace with the model you are using
             messages=[
                 {"role": "user", "content": prompt}
             ],
@@ -27,7 +39,7 @@ def ask_gpt():
         print("Full response object:", response)
 
         # Extract the response text
-        gpt_response = response.choices[0].message.content.strip()
+        gpt_response = response.choices[0].message['content'].strip()
 
         return jsonify({'response': gpt_response})
 
@@ -35,3 +47,6 @@ def ask_gpt():
         # Debugging: Print exception details
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
