@@ -2,11 +2,15 @@ from flask import Flask, request, jsonify
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+
 app = Flask(__name__)
+
 # Load environment variables from .env file
 load_dotenv()
+
 # Initialize the OpenAI client with your API key
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     try:
@@ -36,7 +40,7 @@ def ask_gpt():
         print("Full response object:", response)
 
         # Extract the response text
-        gpt_response = response.choices[0].message['content'].strip()
+        gpt_response = response.choices[0].message.content.strip()
 
         return jsonify({'response': gpt_response})
 
