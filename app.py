@@ -22,7 +22,7 @@ def ask_gpt():
 
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
-            model="gpt-4o",  # Replace with the model you are using
+            model="gpt-4",  # Replace with the model you are using
             messages=[
                 {"role": "user", "content": question}
             ],
@@ -32,10 +32,13 @@ def ask_gpt():
             frequency_penalty=0,
             presence_penalty=0
         )
-         # Debugging: Print the entire response object
+
+        # Debugging: Print the entire response object
         print("Full response object:", response)
+
         # Extract the response text
-        gpt_response = response.choices[0].message["content"].strip()
+        gpt_response = response.choices[0].message.content.strip()
+
         return jsonify({'response': gpt_response})
 
     except Exception as e:
