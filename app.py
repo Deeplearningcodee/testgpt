@@ -52,7 +52,7 @@ def ask_gpt():
             model="gpt-4",
             messages=prompt_data,
             temperature=1,
-            max_tokens=80,
+            max_tokens=60,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0
