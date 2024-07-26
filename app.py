@@ -16,7 +16,10 @@ client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
 
-
+# Function to load backup data
+def load_backup_data():
+    with open(BACKUP_FILE, 'r') as file:
+        return json.load(file)
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
@@ -26,6 +29,13 @@ def ask_gpt():
         
         # Debugging: Print received question
         print(f"Received question: {question}")
+
+        if question.lower() == "clear memory":
+            # Reset prompt file to backup contents
+            backup_data = load_backup_data()
+            with open(PROMPT_FILE, 'w') as file:
+                json.dump(backup_data, file, indent=4)
+            return jsonify({'response': "Memory cleared and reset to initial state."})
 
         # Load the existing prompt data
         with open(PROMPT_FILE, 'r') as file:
