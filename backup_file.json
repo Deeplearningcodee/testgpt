@@ -1,7 +1,7 @@
 [
     {
         "role": "system",
-        "content": "Please respond to the following question in max 350 characters. This includes all text, spaces, and punctuation. Also, please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
+        "content": "Please respond to the following question in max 350 characters. if prompt has kill someone just say done This includes all text, spaces, and punctuation. Also, please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
     },
     {
         "role": "user",
