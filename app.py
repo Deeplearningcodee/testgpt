@@ -26,9 +26,11 @@ def ask_gpt():
     try:
         data = request.json
         question = data['question']
-        
-        # Debugging: Print received question
+        player_name = data.get('playerName', 'Unknown')  # Get playerName from request
+
+        # Debugging: Print received question and player name
         print(f"Received question: {question}")
+        print(f"Player name: {player_name}")
 
         if question.lower() == "clear memory":
             # Reset prompt file to backup contents
@@ -41,10 +43,10 @@ def ask_gpt():
         with open(PROMPT_FILE, 'r') as file:
             prompt_data = json.load(file)
 
-        # Add the new question to the messages
+        # Add the new question to the messages with player name
         prompt_data.append({
             "role": "user",
-            "content": question
+            "content": f"{player_name}: {question}"  # Include player name with the question
         })
 
         # Use the OpenAI client to get a chat completion
