@@ -16,42 +16,7 @@ client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
 
-# Function to initialize files if they don't exist
-def initialize_files():
-    # Initialize prompt file if it doesn't exist
-    if not os.path.exists(PROMPT_FILE):
-        with open(PROMPT_FILE, 'w') as file:
-            json.dump([], file)
-    
-    # Initialize backup file with fine-tuning information if it doesn't exist
-    if not os.path.exists(BACKUP_FILE):
-        backup_data = [
-            {
-              "role": "system",
-              "content": "Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation also Please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
-            },
-            {
-              "role": "user",
-              "content": "move forward"
-            },
-            {
-              "role": "assistant",
-              "content": "{\n\"text\": \"Moving forward.\",\n\"command\": \"move_forward\"\n}"
-            },
-            {
-              "role": "user",
-              "content": "move backward"
-            },
-            {
-              "role": "assistant",
-              "content": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
-            }
-        ]
-        with open(BACKUP_FILE, 'w') as file:
-            json.dump(backup_data, file)
 
-# Initialize files at startup
-initialize_files()
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
