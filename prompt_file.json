@@ -1,0 +1,22 @@
+[
+    {
+        "role": "system",
+        "content": "Please respond to the following question in max 200 characters. This includes all text, spaces, and punctuation. Also, please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
+    },
+    {
+        "role": "user",
+        "content": "move forward"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\": \"Moving forward.\",\n\"command\": \"move_forward\"\n}"
+    },
+    {
+        "role": "user",
+        "content": "move backward"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
+    }
+]
