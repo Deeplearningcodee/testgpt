@@ -51,18 +51,24 @@ def ask_gpt():
         
         print("Full response object:", response)
 
-        if response and 'text' in response:
-            gpt_response = response['text'].strip()
+        if response and response['messages']:
+            gpt_response_message = response['messages'][0]['text'].strip()
+
+            # Debugging: Print the extracted response message
+            print("Extracted GPT response message:", gpt_response_message)
+
+            # Assuming the response message contains a JSON string with 'text' and 'command'
+            gpt_response = json.loads(gpt_response_message)
 
             prompt_data.append({
                 "role": "assistant",
-                "content": gpt_response
+                "content": gpt_response_message
             })
 
             with open(PROMPT_FILE, 'w') as file:
                 json.dump(prompt_data, file, indent=4)
 
-            return jsonify({'response': json.dumps({'text': gpt_response, 'command': None})})
+            return jsonify({'response': json.dumps({'text': gpt_response.get('text'), 'command': gpt_response.get('command')})})
         else:
             return jsonify({'error': 'No response from GPT'}), 500
 
