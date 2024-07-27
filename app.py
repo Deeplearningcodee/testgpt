@@ -10,7 +10,10 @@ app = Flask(__name__)
 load_dotenv()
 
 # Initialize the OpenAI client with your API key
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = OpenAI(
+    api_key="1f8199f3c7864817bcca5cda958bd4f9 ",
+    base_url="https://api.aimlapi.com",
+)
 
 # File paths
 PROMPT_FILE = 'prompt_file.json'
