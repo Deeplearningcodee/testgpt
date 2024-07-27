@@ -1,18 +1,22 @@
 [
     {
-        "role": "user",
-        "parts": ["move forward"]
-    },
-    {
-        "role": "assistant",
-        "parts": ["{\"text\": \"Okay, moving forward. What should I do next?\", \"command\": \"move_forward\"}"]
+        "role": "system",
+        "content": "Please respond to the following question in max 350 characters.   This includes all text, spaces, and punctuation. Also, please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\n{\n\"text\":\"response\",\n\"command\":\"response\"\n}\n\n"
     },
     {
         "role": "user",
-        "parts": ["move backward"]
+        "content": "move forward"
     },
     {
         "role": "assistant",
-        "parts": ["{\"text\": \"Alright, moving backward. Anything else?\", \"command\": \"move_backward\"}"]
+        "content": "{\n\"text\": \"Moving forward.\",\n\"command\": \"move_forward\"\n}"
+    },
+    {
+        "role": "user",
+        "content": "move backward"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
     }
 ]
