@@ -54,7 +54,7 @@ def ask_gpt():
 
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="mistralai/Mistral-7B-Instruct-v0.2",
             messages=prompt_data,
             temperature=1,
             max_tokens=60,
