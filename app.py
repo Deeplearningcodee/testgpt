@@ -10,9 +10,10 @@ app = Flask(__name__)
 load_dotenv()
 
 # Initialize the OpenAI client with your API key
-client = OpenAI(
-   api_key="esecret_vcx9dhcmk5fnqch5937kqncn2a",
-   base_url="https://api.endpoints.anyscale.com/v1",
+client = openai.OpenAI(
+  base_url = "https://api.endpoints.anyscale.com/v1",
+  # Replace with long-lived credentials for production
+  api_key = "esecret_eu2dn3pntb1kzrlvj5daxtax3q"
 )
 
 # File paths
@@ -54,7 +55,7 @@ def ask_gpt():
 
         # Use the OpenAI client to get a chat completion
         response = client.chat.completions.create(
-            model="mistralai/Mistral-7B-Instruct-v0.2",
+            model="mistralai/Mixtral-8x22B-Instruct-v0.1",
             messages=prompt_data,
             temperature=1,
             max_tokens=60,
