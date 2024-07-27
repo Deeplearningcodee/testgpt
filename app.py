@@ -13,7 +13,7 @@ load_dotenv()
 client = OpenAI(
   base_url = "https://api.endpoints.anyscale.com/v1",
   # Replace with long-lived credentials for production
-  api_key = "esecret_eu2dn3pntb1kzrlvj5daxtax3q"
+  api_key=os.getenv('OPENAI_API_KEY')
 )
 
 # File paths
