@@ -58,7 +58,7 @@ def ask_gpt():
             model="mistralai/Mixtral-8x22B-Instruct-v0.1",
             messages=prompt_data,
             temperature=1,
-            max_tokens=60,
+            max_tokens=150,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0
