@@ -1,26 +1,18 @@
 [
     {
-      "role": "user",
-      "parts": [
-        "move forward",
-      ],
+        "role": "user",
+        "parts": ["move forward"]
     },
     {
-      "role": "model",
-      "parts": [
-        "{\n\"text\": \"Okay, moving forward.  What should I do next? \",\n\"command\": move_forward\n}\n",
-      ],
+        "role": "assistant",
+        "parts": ["{\"text\": \"Okay, moving forward. What should I do next?\", \"command\": \"move_forward\"}"]
     },
     {
-      "role": "user",
-      "parts": [
-        "move backward",
-      ],
+        "role": "user",
+        "parts": ["move backward"]
     },
     {
-      "role": "model",
-      "parts": [
-        "{\n\"text\": \"Alright, moving backward. Anything else?\",\n\"command\": move_backward\n} \n",
-      ],
-    },
-  ]
+        "role": "assistant",
+        "parts": ["{\"text\": \"Alright, moving backward. Anything else?\", \"command\": \"move_backward\"}"]
+    }
+]
