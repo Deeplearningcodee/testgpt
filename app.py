@@ -1,16 +1,16 @@
 from flask import Flask, request, jsonify
-from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import json
+import google.generativeai as genai
 
 app = Flask(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize the OpenAI client with your API key
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize the Gemini client with your API key
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
 # File paths
 PROMPT_FILE = 'prompt_file.json'
@@ -46,30 +46,43 @@ def ask_gpt():
         # Add the new question to the messages with player name
         prompt_data.append({
             "role": "user",
-            "content": f"{player_name}: {question}"  # Include player name with the question
+            "parts": [f"{player_name}: {question}"]
         })
 
-        # Use the OpenAI client to get a chat completion
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=prompt_data,
-            temperature=1,
-            max_tokens=60,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
+        # Create the model configuration
+        generation_config = {
+            "temperature": 1,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_output_tokens": 8192,
+            "response_mime_type": "text/plain",
+        }
+
+        # Create the model
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-pro",
+            generation_config=generation_config,
+            system_instruction="Please respond to the following question in max 350 characters. This includes all text, spaces, and punctuation. Also, please respond to the following question in a structured format. The response should contain 'text' and optionally 'command' fields:\\n{\\n\\\"text\\\":\\\"response\\\",\\n\\\"command\\\":\\\"response\\\"\\n}\\n\\n\n",
         )
+
+        # Start a new chat session with the current prompt history
+        chat_session = model.start_chat(
+            history=prompt_data
+        )
+
+        # Send the message to the Gemini model
+        response = chat_session.send_message(question)
 
         # Debugging: Print the entire response object
         print("Full response object:", response)
 
         # Extract the response text
-        gpt_response = response.choices[0].message.content.strip()
+        gpt_response = response.text.strip()
 
-        # Add the GPT-4 response to the messages
+        # Add the Gemini response to the messages
         prompt_data.append({
-            "role": "assistant",
-            "content": gpt_response
+            "role": "model",
+            "parts": [gpt_response]
         })
 
         # Save the updated messages back to the prompt file
