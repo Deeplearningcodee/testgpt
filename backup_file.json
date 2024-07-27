@@ -5,7 +5,7 @@
     },
     {
         "role": "user",
-        "content": "move forward"
+        "content": "Anomic_Ad: move forward"
     },
     {
         "role": "assistant",
@@ -13,10 +13,19 @@
     },
     {
         "role": "user",
-        "content": "move backward"
+        "content": "Anomic_Ad: move backward"
     },
     {
         "role": "assistant",
         "content": "{\n\"text\": \"Moving backward.\",\n\"command\": \"move_backward\"\n}"
+    },
+    {
+        "role": "user",
+        "content": "Random_user: move backward"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\": \"User Not Allowed.\",\n\"command\": \"nill\"\n}"
     }
+     
 ]
