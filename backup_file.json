@@ -49,7 +49,7 @@
     },
     {
         "role": "assistant",
-        "content": "{\n\"text\": \"User Skibidi has been blocked due to spamming\",\n\"command\": \"warning_3\",\n\"target\": \"Skibidi\"\n}"
+        "content": "{\n\"text\": \"User Skibidi has been blocked due to spamming\",\n\"command\": \"block\",\n\"target\": \"Skibidi\"\n}"
     },
     {
         "role": "user",
@@ -57,7 +57,24 @@
     },
     {
         "role": "assistant",
-        "content": "{\n\"text\":\"I'm unable to check the weather for you, please use a weather app.\",\n\"command\":\"nill\",\n\"target\":\"nill\"\n}",
-        "target": "joe"
+        "content": "{\n\"text\":\"I'm unable to check the weather for you, please use a weather app.\",\n\"command\":\"nill\",\n\"target\":\"nill\"\n}"
+    },
+    {
+        "role": "user",
+        "content": "joe: stop ignoring user203"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\":\"you re not allowed to make commands only Anomic_AD can.\",\n\"command\":\"nill\",\n\"target\":\"nill\"\n}"
+        
+    },
+    {
+        "role": "user",
+        "content": "Anomic_AD: stop ignoring user203"
+    },
+    {
+        "role": "assistant",
+        "content": "{\n\"text\":\"User user203 has been unblocked.\",\n\"command\":\"unblock\",\n\"target\":\"user203\"\n}"
     }
+
 ]
