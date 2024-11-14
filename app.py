@@ -87,5 +87,15 @@ def ask_gpt():
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/test', methods=['POST'])
+def test():
+    try:
+        data = request.json
+        print(data)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
