@@ -109,16 +109,16 @@ def test():
         if not image_data:
             return jsonify({'error': 'No image data received'}), 400
 
-        # Save the image data to a file
+        # Save the image data to a file for debugging/logging purposes
         image_file_path = os.path.join(SAVE_DIR, "screenshot.png")
         with open(image_file_path, 'wb') as file:
             file.write(image_data)
 
-        # Send the saved screenshot to the inference client
+        # Send the binary image data directly to the inference client
         result = client_inference.run_workflow(
             workspace_name="object-detection-f8udo",
             workflow_id="custom-workflow",
-            images={"image": image_file_path}
+            images={"image": image_data}  # Pass binary data directly
         )
 
         # Parse the response
