@@ -18,7 +18,7 @@ if not INFERENCE_API_KEY:
     raise ValueError("INFERENCE_API_KEY is not set in the environment variables.")
 # InferenceHTTPClient configuration
 client_inference = InferenceHTTPClient(
-    api_url="http://localhost:9001",  # Use local inference server
+    api_url="https://detect.roboflow.com",  # Use local inference server
     api_key=INFERENCE_API_KEY
 )
 
