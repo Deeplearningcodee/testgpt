@@ -6,6 +6,9 @@ import json
 
 app = Flask(__name__)
 
+SAVE_DIR = "received_images"
+os.makedirs(SAVE_DIR, exist_ok=True)  # Ensure the directory exists
+
 # Load environment variables from .env file
 load_dotenv()
 
