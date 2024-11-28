@@ -90,10 +90,22 @@ def ask_gpt():
 @app.route('/test', methods=['POST'])
 def test():
     try:
-        data = request.json
-        print(data)
-        return jsonify(data)
+        # Get the raw binary data from the request body
+        image_data = request.data
+
+        if not image_data:
+            return jsonify({'error': 'No image data received'}), 400
+
+        # Save the image data to a file
+        image_file_path = os.path.join(SAVE_DIR, "screenshot.png")
+        with open(image_file_path, 'wb') as file:
+            file.write(image_data)
+
+        return jsonify({'message': 'Image received and saved', 'file_path': image_file_path})
+
     except Exception as e:
+        # Handle and log any exceptions
+        print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
