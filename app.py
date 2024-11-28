@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from inference_sdk import InferenceHTTPClient
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -9,8 +10,17 @@ app = Flask(__name__)
 SAVE_DIR = "received_images"
 os.makedirs(SAVE_DIR, exist_ok=True)  # Ensure the directory exists
 
+
 # Load environment variables from .env file
 load_dotenv()
+INFERENCE_API_KEY = os.getenv("INFERENCE_API_KEY")
+if not INFERENCE_API_KEY:
+    raise ValueError("INFERENCE_API_KEY is not set in the environment variables.")
+# InferenceHTTPClient configuration
+client_inference = InferenceHTTPClient(
+    api_url="http://localhost:9001",  # Use local inference server
+    api_key=INFERENCE_API_KEY
+)
 
 # Initialize the OpenAI client with your API key
 client = OpenAI(
@@ -104,7 +114,34 @@ def test():
         with open(image_file_path, 'wb') as file:
             file.write(image_data)
 
-        return jsonify({'message': 'Image received and saved', 'file_path': image_file_path})
+        # Send the saved screenshot to the inference client
+        result = client_inference.run_workflow(
+            workspace_name="object-detection-f8udo",
+            workflow_id="custom-workflow",
+            images={"image": image_file_path}
+        )
+
+        # Parse the response
+        parsed_response = []
+        for workflow, result_data in result.items():
+            try:
+                detections = json.loads(result_data)  # Parse the JSON string
+                parsed_response.append({
+                    "workflow": workflow,
+                    "detections": detections.get("detections", []),
+                    "answer": detections.get("question/answer", "")
+                })
+            except json.JSONDecodeError:
+                parsed_response.append({
+                    "workflow": workflow,
+                    "error": "Failed to parse response data."
+                })
+
+        # Log or format the parsed response for debugging
+        print("Parsed Inference Response:", parsed_response)
+
+        # Send the parsed response back to Roblox
+        return jsonify(parsed_response)
 
     except Exception as e:
         # Handle and log any exceptions
