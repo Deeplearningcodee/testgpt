@@ -44,44 +44,53 @@ pending_requests = {}
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
-    try:
-        data = request.json
-        question = data['question']
-        player_name = data.get('playerName', 'Unknown')  # Get playerName from request
+    # Call the /execute endpoint on the different server
+    execute_server_url = 'http://<OTHER_SERVER_IP>:5000/execute'  # Replace with the actual IP and port
+    execute_response = requests.post(execute_server_url)
 
-        # Debugging: Print received question and player name
-        print(f"Received question: {question}")
-        print(f"Player name: {player_name}")
+    if execute_response.status_code != 200:
+            return jsonify({'error': 'Failed to execute capture.py on the different server.'}), 500
 
-        if question.lower() == "clear memory":
-            # Reset prompt file to backup contents
-            backup_data = load_backup_data()
-            with open(PROMPT_FILE, 'w') as file:
-                json.dump(backup_data, file, indent=4)
-            return jsonify({'response': "Memory cleared and reset to initial state."})
+    # Inform the user that processing is underway
+    return jsonify({'response': "Processing your request. Please wait for the response."})
+    # try:
+    #     data = request.json
+    #     question = data['question']
+    #     player_name = data.get('playerName', 'Unknown')  # Get playerName from request
 
-        # Generate a unique request ID
-        request_id = f"{player_name}_{int(time.time())}"
+    #     # Debugging: Print received question and player name
+    #     print(f"Received question: {question}")
+    #     print(f"Player name: {player_name}")
 
-        # Store the question and player name in pending_requests
-        pending_requests[request_id] = {
-            'question': question,
-            'player_name': player_name
-        }
+    #     if question.lower() == "clear memory":
+    #         # Reset prompt file to backup contents
+    #         backup_data = load_backup_data()
+    #         with open(PROMPT_FILE, 'w') as file:
+    #             json.dump(backup_data, file, indent=4)
+    #         return jsonify({'response': "Memory cleared and reset to initial state."})
 
-        # Trigger capture.py on the different PC
-        capture_server_url = 'http://100.121.251.80:5000/trigger_capture'  # Replace with the actual IP and port
-        trigger_response = requests.post(capture_server_url, json={'request_id': request_id})
+    #     # Generate a unique request ID
+    #     request_id = f"{player_name}_{int(time.time())}"
 
-        if trigger_response.status_code != 200:
-            return jsonify({'error': 'Failed to trigger capture on the different PC.'}), 500
+    #     # Store the question and player name in pending_requests
+    #     pending_requests[request_id] = {
+    #         'question': question,
+    #         'player_name': player_name
+    #     }
 
-        # Inform the user that processing is underway
-        return jsonify({'response': "Processing your request. Please wait for the response."})
+    #     # Trigger capture.py on the different PC
+    #     capture_server_url = 'http://100.121.251.80:5000/trigger_capture'  # Replace with the actual IP and port
+    #     trigger_response = requests.post(capture_server_url, json={'request_id': request_id})
 
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
+    #     if trigger_response.status_code != 200:
+    #         return jsonify({'error': 'Failed to trigger capture on the different PC.'}), 500
+
+    #     # Inform the user that processing is underway
+    #     return jsonify({'response': "Processing your request. Please wait for the response."})
+
+    # except Exception as e:
+    #     print(f"Error: {e}")
+    #     return jsonify({'error': str(e)}), 500
 
 @app.route('/test', methods=['POST'])
 def test():
