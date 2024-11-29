@@ -45,7 +45,7 @@ pending_requests = {}
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     # Call the /execute endpoint on the different server
-    execute_server_url = 'http://100.121.251.80:5000/execute'  # Replace with the actual IP and port
+    execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'  # Replace with the actual IP and port
     execute_response = requests.post(execute_server_url)
 
     if execute_response.status_code != 200:
