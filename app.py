@@ -1,4 +1,5 @@
 import time
+import threading
 from flask import Flask, request, jsonify
 from inference_sdk import InferenceHTTPClient
 from openai import OpenAI
@@ -41,160 +42,70 @@ def load_backup_data():
 
 # Dictionary to store pending requests
 pending_requests = {}
+pending_responses = {}
+pending_events = {}
 
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
-    # Call the /execute endpoint on the different server
-    execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'  # Replace with the actual IP and port
-    execute_response = requests.post(execute_server_url)
+    data = request.json
+    question = data.get('question')
+    player_name = data.get('playerName', 'Unknown')
 
-    if execute_response.status_code != 200:
-            return jsonify({'error': 'Failed to execute capture.py on the different server.'}), 500
+    if not question:
+        return jsonify({'error': 'Question is required.'}), 400
 
-    # Inform the user that processing is underway
-    return jsonify({'response': "Processing your request. Please wait for the response."})
-    # try:
-    #     data = request.json
-    #     question = data['question']
-    #     player_name = data.get('playerName', 'Unknown')  # Get playerName from request
+    # Generate a unique request ID
+    request_id = f"{player_name}_{int(time.time())}"
+    
+    # Create an Event to wait for the response
+    event = threading.Event()
+    pending_events[request_id] = event
+    
+    # Store the request details
+    pending_requests[request_id] = {
+        'question': question,
+        'player_name': player_name
+    }
 
-    #     # Debugging: Print received question and player name
-    #     print(f"Received question: {question}")
-    #     print(f"Player name: {player_name}")
+    # Trigger the external execute
+    execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'
+    try:
+        execute_response = requests.post(execute_server_url, json={'request_id': request_id})
+        if execute_response.status_code != 200:
+            return jsonify({'error': 'Failed to execute capture on the different server.'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-    #     if question.lower() == "clear memory":
-    #         # Reset prompt file to backup contents
-    #         backup_data = load_backup_data()
-    #         with open(PROMPT_FILE, 'w') as file:
-    #             json.dump(backup_data, file, indent=4)
-    #         return jsonify({'response': "Memory cleared and reset to initial state."})
+    # Wait for the response from /test
+    event.wait(timeout=300)  # Wait up to 5 minutes
 
-    #     # Generate a unique request ID
-    #     request_id = f"{player_name}_{int(time.time())}"
+    # Retrieve the response
+    response = pending_responses.pop(request_id, None)
+    pending_events.pop(request_id, None)
 
-    #     # Store the question and player name in pending_requests
-    #     pending_requests[request_id] = {
-    #         'question': question,
-    #         'player_name': player_name
-    #     }
-
-    #     # Trigger capture.py on the different PC
-    #     capture_server_url = 'http://100.121.251.80:5000/trigger_capture'  # Replace with the actual IP and port
-    #     trigger_response = requests.post(capture_server_url, json={'request_id': request_id})
-
-    #     if trigger_response.status_code != 200:
-    #         return jsonify({'error': 'Failed to trigger capture on the different PC.'}), 500
-
-    #     # Inform the user that processing is underway
-    #     return jsonify({'response': "Processing your request. Please wait for the response."})
-
-    # except Exception as e:
-    #     print(f"Error: {e}")
-    #     return jsonify({'error': str(e)}), 500
+    if response:
+        return jsonify({'response': response})
+    else:
+        return jsonify({'error': 'Timed out waiting for response.'}), 504
 
 @app.route('/test', methods=['POST'])
 def test():
     data = request.json
-    print("Received data:", data)
-    return "Data received", 200
-    # try:
-    #     # Extract request_id from query parameters
-    #     request_id = request.args.get('request_id')
+    request_id = data.get('request_id')
+    response_data = data.get('response')
 
-    #     if not request_id or request_id not in pending_requests:
-    #         return jsonify({'error': 'Invalid or missing request ID.'}), 400
+    if not request_id or not response_data:
+        return jsonify({'error': 'request_id and response are required.'}), 400
 
-    #     # Get the raw binary data from the request body
-    #     image_data = request.data
+    # Store the response
+    pending_responses[request_id] = response_data
 
-    #     if not image_data:
-    #         return jsonify({'error': 'No image data received'}), 400
+    # Set the event to unblock /ask_gpt
+    event = pending_events.get(request_id)
+    if event:
+        event.set()
 
-    #     # Save the image data to a file for debugging/logging purposes
-    #     image_file_path = os.path.join(SAVE_DIR, f"{request_id}_screenshot.png")
-    #     with open(image_file_path, 'wb') as file:
-    #         file.write(image_data)
-
-    #     # Send the binary image data to the inference client
-    #     result = client_inference.run_workflow(
-    #         workspace_name="object-detection-f8udo",
-    #         workflow_id="custom-workflow",
-    #         images={"image": image_data}  # Pass binary data directly
-    #     )
-
-    #     # Parse the response
-    #     parsed_response = []
-    #     for workflow, result_data in result.items():
-    #         try:
-    #             detections = json.loads(result_data)  # Parse the JSON string
-    #             parsed_response.append({
-    #                 "workflow": workflow,
-    #                 "detections": detections.get("detections", []),
-    #                 "answer": detections.get("question/answer", "")
-    #             })
-    #         except json.JSONDecodeError:
-    #             parsed_response.append({
-    #                 "workflow": workflow,
-    #                 "error": "Failed to parse response data."
-    #             })
-
-    #     # Log the parsed response
-    #     print("Parsed Inference Response:", parsed_response)
-
-    #     # Now, send the inference result to OpenAI client
-
-    #     # Load the existing prompt data
-    #     with open(PROMPT_FILE, 'r') as file:
-    #         prompt_data = json.load(file)
-
-    #     # Retrieve the pending request data
-    #     request_info = pending_requests.pop(request_id, None)
-    #     if not request_info:
-    #         return jsonify({'error': 'Request information not found.'}), 400
-
-    #     question = request_info['question']
-    #     player_name = request_info['player_name']
-
-    #     # Add the new question to the messages with player name and inference result
-    #     inference_context = json.dumps(parsed_response)
-    #     prompt_data.append({
-    #         "role": "user",
-    #         "content": f"{player_name}: {question}\nVisual context: {inference_context}"
-    #     })
-
-    #     # Use the OpenAI client to get a chat completion
-    #     response = client.chat.completions.create(
-    #         model="mistralai/Mixtral-8x22B-Instruct-v0.1",
-    #         messages=prompt_data,
-    #         temperature=1,
-    #         max_tokens=150,
-    #         top_p=1,
-    #         frequency_penalty=0,
-    #         presence_penalty=0
-    #     )
-
-    #     # Debugging: Print the entire response object
-    #     print("Full response object:", response)
-
-    #     # Extract the response text
-    #     gpt_response = response.choices[0].message.content.strip()
-
-    #     # Add the assistant's response to the messages
-    #     prompt_data.append({
-    #         "role": "assistant",
-    #         "content": gpt_response
-    #     })
-
-    #     # Save the updated messages back to the prompt file
-    #     with open(PROMPT_FILE, 'w') as file:
-    #         json.dump(prompt_data, file, indent=4)
-
-    #     # Return the GPT response
-    #     return jsonify({'response': gpt_response})
-
-    # except Exception as e:
-    #     print(f"Error: {e}")
-    #     return jsonify({'error': str(e)}), 500
+    return jsonify({'status': 'Response received.'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
