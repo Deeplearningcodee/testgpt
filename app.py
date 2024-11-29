@@ -85,104 +85,107 @@ def ask_gpt():
 
 @app.route('/test', methods=['POST'])
 def test():
-    try:
-        # Extract request_id from query parameters
-        request_id = request.args.get('request_id')
+    data = request.json
+    print("Received data:", data)
+    return "Data received", 200
+    # try:
+    #     # Extract request_id from query parameters
+    #     request_id = request.args.get('request_id')
 
-        if not request_id or request_id not in pending_requests:
-            return jsonify({'error': 'Invalid or missing request ID.'}), 400
+    #     if not request_id or request_id not in pending_requests:
+    #         return jsonify({'error': 'Invalid or missing request ID.'}), 400
 
-        # Get the raw binary data from the request body
-        image_data = request.data
+    #     # Get the raw binary data from the request body
+    #     image_data = request.data
 
-        if not image_data:
-            return jsonify({'error': 'No image data received'}), 400
+    #     if not image_data:
+    #         return jsonify({'error': 'No image data received'}), 400
 
-        # Save the image data to a file for debugging/logging purposes
-        image_file_path = os.path.join(SAVE_DIR, f"{request_id}_screenshot.png")
-        with open(image_file_path, 'wb') as file:
-            file.write(image_data)
+    #     # Save the image data to a file for debugging/logging purposes
+    #     image_file_path = os.path.join(SAVE_DIR, f"{request_id}_screenshot.png")
+    #     with open(image_file_path, 'wb') as file:
+    #         file.write(image_data)
 
-        # Send the binary image data to the inference client
-        result = client_inference.run_workflow(
-            workspace_name="object-detection-f8udo",
-            workflow_id="custom-workflow",
-            images={"image": image_data}  # Pass binary data directly
-        )
+    #     # Send the binary image data to the inference client
+    #     result = client_inference.run_workflow(
+    #         workspace_name="object-detection-f8udo",
+    #         workflow_id="custom-workflow",
+    #         images={"image": image_data}  # Pass binary data directly
+    #     )
 
-        # Parse the response
-        parsed_response = []
-        for workflow, result_data in result.items():
-            try:
-                detections = json.loads(result_data)  # Parse the JSON string
-                parsed_response.append({
-                    "workflow": workflow,
-                    "detections": detections.get("detections", []),
-                    "answer": detections.get("question/answer", "")
-                })
-            except json.JSONDecodeError:
-                parsed_response.append({
-                    "workflow": workflow,
-                    "error": "Failed to parse response data."
-                })
+    #     # Parse the response
+    #     parsed_response = []
+    #     for workflow, result_data in result.items():
+    #         try:
+    #             detections = json.loads(result_data)  # Parse the JSON string
+    #             parsed_response.append({
+    #                 "workflow": workflow,
+    #                 "detections": detections.get("detections", []),
+    #                 "answer": detections.get("question/answer", "")
+    #             })
+    #         except json.JSONDecodeError:
+    #             parsed_response.append({
+    #                 "workflow": workflow,
+    #                 "error": "Failed to parse response data."
+    #             })
 
-        # Log the parsed response
-        print("Parsed Inference Response:", parsed_response)
+    #     # Log the parsed response
+    #     print("Parsed Inference Response:", parsed_response)
 
-        # Now, send the inference result to OpenAI client
+    #     # Now, send the inference result to OpenAI client
 
-        # Load the existing prompt data
-        with open(PROMPT_FILE, 'r') as file:
-            prompt_data = json.load(file)
+    #     # Load the existing prompt data
+    #     with open(PROMPT_FILE, 'r') as file:
+    #         prompt_data = json.load(file)
 
-        # Retrieve the pending request data
-        request_info = pending_requests.pop(request_id, None)
-        if not request_info:
-            return jsonify({'error': 'Request information not found.'}), 400
+    #     # Retrieve the pending request data
+    #     request_info = pending_requests.pop(request_id, None)
+    #     if not request_info:
+    #         return jsonify({'error': 'Request information not found.'}), 400
 
-        question = request_info['question']
-        player_name = request_info['player_name']
+    #     question = request_info['question']
+    #     player_name = request_info['player_name']
 
-        # Add the new question to the messages with player name and inference result
-        inference_context = json.dumps(parsed_response)
-        prompt_data.append({
-            "role": "user",
-            "content": f"{player_name}: {question}\nVisual context: {inference_context}"
-        })
+    #     # Add the new question to the messages with player name and inference result
+    #     inference_context = json.dumps(parsed_response)
+    #     prompt_data.append({
+    #         "role": "user",
+    #         "content": f"{player_name}: {question}\nVisual context: {inference_context}"
+    #     })
 
-        # Use the OpenAI client to get a chat completion
-        response = client.chat.completions.create(
-            model="mistralai/Mixtral-8x22B-Instruct-v0.1",
-            messages=prompt_data,
-            temperature=1,
-            max_tokens=150,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
+    #     # Use the OpenAI client to get a chat completion
+    #     response = client.chat.completions.create(
+    #         model="mistralai/Mixtral-8x22B-Instruct-v0.1",
+    #         messages=prompt_data,
+    #         temperature=1,
+    #         max_tokens=150,
+    #         top_p=1,
+    #         frequency_penalty=0,
+    #         presence_penalty=0
+    #     )
 
-        # Debugging: Print the entire response object
-        print("Full response object:", response)
+    #     # Debugging: Print the entire response object
+    #     print("Full response object:", response)
 
-        # Extract the response text
-        gpt_response = response.choices[0].message.content.strip()
+    #     # Extract the response text
+    #     gpt_response = response.choices[0].message.content.strip()
 
-        # Add the assistant's response to the messages
-        prompt_data.append({
-            "role": "assistant",
-            "content": gpt_response
-        })
+    #     # Add the assistant's response to the messages
+    #     prompt_data.append({
+    #         "role": "assistant",
+    #         "content": gpt_response
+    #     })
 
-        # Save the updated messages back to the prompt file
-        with open(PROMPT_FILE, 'w') as file:
-            json.dump(prompt_data, file, indent=4)
+    #     # Save the updated messages back to the prompt file
+    #     with open(PROMPT_FILE, 'w') as file:
+    #         json.dump(prompt_data, file, indent=4)
 
-        # Return the GPT response
-        return jsonify({'response': gpt_response})
+    #     # Return the GPT response
+    #     return jsonify({'response': gpt_response})
 
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
+    # except Exception as e:
+    #     print(f"Error: {e}")
+    #     return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
