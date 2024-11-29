@@ -11,36 +11,30 @@ import requests
 app = Flask(__name__)
 
 SAVE_DIR = "received_images"
-os.makedirs(SAVE_DIR, exist_ok=True)  # Ensure the directory exists
+os.makedirs(SAVE_DIR, exist_ok=True)
 
-# Load environment variables from .env file
 load_dotenv()
 INFERENCE_API_KEY = os.getenv("INFERENCE_API_KEY")
 if not INFERENCE_API_KEY:
-    raise ValueError("INFERENCE_API_KEY is not set in the environment variables.")
+    raise ValueError("INFERENCE_API_KEY is not set.")
 
-# InferenceHTTPClient configuration
 client_inference = InferenceHTTPClient(
-    api_url="https://detect.roboflow.com",  # Use your inference server URL
+    api_url="https://detect.roboflow.com",
     api_key=INFERENCE_API_KEY
 )
 
-# Initialize the OpenAI client with your API key
 client = OpenAI(
-    base_url="https://api.endpoints.anyscale.com/v1",  # Replace with your OpenAI base URL
+    base_url="https://api.endpoints.anyscale.com/v1",
     api_key=os.getenv('OPENAI_API_KEY')
 )
 
-# File paths
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
 
-# Function to load backup data
 def load_backup_data():
     with open(BACKUP_FILE, 'r') as file:
         return json.load(file)
 
-# Dictionary to store pending requests
 pending_requests = {}
 pending_responses = {}
 pending_events = {}
@@ -54,20 +48,15 @@ def ask_gpt():
     if not question:
         return jsonify({'error': 'Question is required.'}), 400
 
-    # Generate a unique request ID
     request_id = f"{player_name}_{int(time.time())}"
-    
-    # Create an Event to wait for the response
     event = threading.Event()
     pending_events[request_id] = event
-    
-    # Store the request details
+
     pending_requests[request_id] = {
         'question': question,
         'player_name': player_name
     }
 
-    # Trigger the external execute
     execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'
     try:
         execute_response = requests.post(execute_server_url, json={'request_id': request_id})
@@ -76,10 +65,8 @@ def ask_gpt():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    # Wait for the response from /test
-    event.wait(timeout=10)  # Wait up to 5 minutes
+    event.wait(timeout=300)
 
-    # Retrieve the response
     response = pending_responses.pop(request_id, None)
     pending_events.pop(request_id, None)
 
@@ -91,21 +78,61 @@ def ask_gpt():
 @app.route('/test', methods=['POST'])
 def test():
     data = request.json
-    request_id = data.get('request_id')
-    response_data = data.get('response')
+    print("Received data:", data)
+    try:
+        request_id = data.get('request_id')
+        response_data = data.get('response')
 
-    if not request_id or not response_data:
-        return jsonify({'error': 'request_id and response are required.'}), 400
+        if not request_id or request_id not in pending_requests:
+            return jsonify({'error': 'Invalid or missing request ID.'}), 400
 
-    # Store the response
-    pending_responses[request_id] = response_data
+        visual_response = response_data.get('visual', '')
 
-    # Set the event to unblock /ask_gpt
-    event = pending_events.get(request_id)
-    if event:
-        event.set()
+        with open(PROMPT_FILE, 'r') as file:
+            prompt_data = json.load(file)
 
-    return jsonify({'status': 'Response received.'}), 200
+        request_info = pending_requests.pop(request_id, None)
+        if not request_info:
+            return jsonify({'error': 'Request information not found.'}), 400
+
+        question = request_info['question']
+        player_name = request_info['player_name']
+
+        prompt_data.append({
+            "role": "user",
+            "content": f"{player_name}: {question}\nVisual context: {visual_response}"
+        })
+
+        response = client.chat.completions.create(
+            model="mistralai/Mixtral-8x22B-Instruct-v0.1",
+            messages=prompt_data,
+            temperature=1,
+            max_tokens=150,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+
+        gpt_response = response.choices[0].message.content.strip()
+
+        prompt_data.append({
+            "role": "assistant",
+            "content": gpt_response
+        })
+
+        with open(PROMPT_FILE, 'w') as file:
+            json.dump(prompt_data, file, indent=4)
+
+        pending_responses[request_id] = gpt_response
+        event = pending_events.get(request_id)
+        if event:
+            event.set()
+
+        return jsonify({'status': 'Response processed.'}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
