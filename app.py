@@ -77,7 +77,7 @@ def ask_gpt():
         return jsonify({'error': str(e)}), 500
 
     # Wait for the response from /test
-    event.wait(timeout=300)  # Wait up to 5 minutes
+    event.wait(timeout=10)  # Wait up to 5 minutes
 
     # Retrieve the response
     response = pending_responses.pop(request_id, None)
