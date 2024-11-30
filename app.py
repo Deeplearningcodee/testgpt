@@ -58,51 +58,31 @@ def ask_gpt():
     }
 
     execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'
+    visual = ''
     try:
-        execute_response = requests.post(execute_server_url, json={'request_id': request_id})
-        if execute_response.status_code != 200:
-            return jsonify({'error': 'Failed to execute capture on the different server.'}), 500
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        execute_response = requests.post(execute_server_url, json={'request_id': request_id}, timeout=5)
+        if execute_response.status_code == 200:
+            response_data = execute_response.json()
+            if isinstance(response_data, list) and len(response_data) > 0:
+                visual = response_data[0].get('visual', '')
+        else:
+            print('Execute server responded with status code:', execute_response.status_code)
+    except requests.RequestException as e:
+        print(f"Execute server request failed: {e}")
 
-    event.wait(timeout=300)
+    with open(PROMPT_FILE, 'r') as file:
+        prompt_data = json.load(file)
 
-    response = pending_responses.pop(request_id, None)
-    pending_events.pop(request_id, None)
+    prompt_content = f"{player_name}: {question}"
+    if visual:
+        prompt_content += f"\nVisual context: {visual}"
 
-    if response:
-        return jsonify({'response': response})
-    else:
-        return jsonify({'error': 'Timed out waiting for response.'}), 504
+    prompt_data.append({
+        "role": "user",
+        "content": prompt_content
+    })
 
-@app.route('/test', methods=['POST'])
-def test():
-    data = request.json
-    print("Received data:", data)
     try:
-        request_id = data.get('request_id')
-        response_data = data.get('response')
-
-        if not request_id or request_id not in pending_requests:
-            return jsonify({'error': 'Invalid or missing request ID.'}), 400
-
-        visual_response = response_data.get('visual', '')
-
-        with open(PROMPT_FILE, 'r') as file:
-            prompt_data = json.load(file)
-
-        request_info = pending_requests.pop(request_id, None)
-        if not request_info:
-            return jsonify({'error': 'Request information not found.'}), 400
-
-        question = request_info['question']
-        player_name = request_info['player_name']
-
-        prompt_data.append({
-            "role": "user",
-            "content": f"{player_name}: {question}\nVisual context: {visual_response}"
-        })
-
         response = client.chat.completions.create(
             model="mistralai/Mixtral-8x22B-Instruct-v0.1",
             messages=prompt_data,
@@ -128,7 +108,7 @@ def test():
         if event:
             event.set()
 
-        return jsonify({'status': 'Response processed.'}), 200
+        return jsonify({'response': gpt_response})
 
     except Exception as e:
         print(f"Error: {e}")
