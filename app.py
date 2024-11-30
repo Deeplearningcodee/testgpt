@@ -20,10 +20,8 @@ load_dotenv()
 
 
 # Configure Gemini API
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
-if not os.environ["GEMINI_API_KEY"]:
-    raise ValueError("GEMINI_API_KEY is not set.")
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
