@@ -1,12 +1,15 @@
+# serverside.txt
+
 import time
 import threading
 from flask import Flask, request, jsonify
 from inference_sdk import InferenceHTTPClient
-from openai import OpenAI
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
 import requests
+import re  # Import regex module
 
 app = Flask(__name__)
 
@@ -23,10 +26,11 @@ client_inference = InferenceHTTPClient(
     api_key=INFERENCE_API_KEY
 )
 
-client = OpenAI(
-    base_url="https://api.endpoints.anyscale.com/v1",
-    api_key=os.getenv('OPENAI_API_KEY')
-)
+# Configure Gemini API
+os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
+if not os.environ["GEMINI_API_KEY"]:
+    raise ValueError("GEMINI_API_KEY is not set.")
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
@@ -70,8 +74,13 @@ def ask_gpt():
     except requests.RequestException as e:
         print(f"Execute server request failed: {e}")
 
-    with open(PROMPT_FILE, 'r') as file:
-        prompt_data = json.load(file)
+    try:
+        with open(PROMPT_FILE, 'r') as file:
+            prompt_data = json.load(file)
+    except FileNotFoundError:
+        prompt_data = []
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid prompt file format.'}), 500
 
     prompt_content = f"{player_name}: {question}"
     if visual:
@@ -82,37 +91,72 @@ def ask_gpt():
         "content": prompt_content
     })
 
+    # Construct the history as an ordered list of messages
+    history = []
+    for msg in prompt_data:
+        role = msg.get("role")
+        content = msg.get("content", "").strip()
+        if role in ["user", "assistant"] and content:
+            history.append({
+                "role": role,
+                "parts": [content]
+            })
+
+    # Create the model
+    generation_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "top_k": 40,
+        "max_output_tokens": 150,
+        "response_mime_type": "text/plain",
+    }
+
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=generation_config,
+    )
+
+    # Initialize chat session with history
     try:
-        response = client.chat.completions.create(
-            model="mistralai/Mixtral-8x22B-Instruct-v0.1",
-            messages=prompt_data,
-            temperature=1,
-            max_tokens=150,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
+        chat_session = model.start_chat(history=history)
+    except Exception as e:
+        print(f"Error initializing chat session: {e}")
+        return jsonify({'error': 'Failed to initialize chat session.'}), 500
 
-        gpt_response = response.choices[0].message.content.strip()
+    # Send message to Gemini
+    try:
+        response = chat_session.send_message(prompt_content)
+        gpt_response = response.text.strip()
 
-        prompt_data.append({
-            "role": "assistant",
-            "content": gpt_response
-        })
-
-        with open(PROMPT_FILE, 'w') as file:
-            json.dump(prompt_data, file, indent=4)
-
-        pending_responses[request_id] = gpt_response
-        event = pending_events.get(request_id)
-        if event:
-            event.set()
-
-        return jsonify({'response': gpt_response})
+        # Remove ```json and ``` if present
+        gpt_response = re.sub(r'^```json\s*', '', gpt_response, flags=re.MULTILINE)
+        gpt_response = re.sub(r'```\s*$', '', gpt_response, flags=re.MULTILINE).strip()
 
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
+        print(f"Error during Gemini request: {e}")
+        return jsonify({'error': 'Failed to get response from Gemini.'}), 500
+
+    # Append Gemini's response to the prompt data
+    prompt_data.append({
+        "role": "assistant",
+        "content": gpt_response
+    })
+
+    # Save the updated prompt data back to the file
+    try:
+        with open(PROMPT_FILE, 'w') as file:
+            json.dump(prompt_data, file, indent=4)
+        print("Response saved to prompt_file.json")
+    except Exception as e:
+        print(f"Error saving response: {e}")
+        return jsonify({'error': 'Failed to save response.'}), 500
+
+    pending_responses[request_id] = gpt_response
+    event = pending_events.get(request_id)
+    if event:
+        event.set()
+
+    return jsonify({'response': gpt_response})
 
 if __name__ == '__main__':
     app.run(debug=True)
