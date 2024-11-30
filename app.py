@@ -17,10 +17,7 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 
 load_dotenv()
 
-
-
 # Configure Gemini API
-
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 PROMPT_FILE = 'prompt_file.json'
@@ -42,6 +39,20 @@ def ask_gpt():
 
     if not question:
         return jsonify({'error': 'Question is required.'}), 400
+
+    # Check for "clear memory" command
+    if question.strip().lower() == "clear memory":
+        try:
+            backup_data = load_backup_data()
+            with open(PROMPT_FILE, 'w') as file:
+                json.dump(backup_data, file, indent=4)
+            return jsonify({'response': 'Memory has been cleared.'}), 200
+        except FileNotFoundError:
+            return jsonify({'error': 'Backup file not found.'}), 500
+        except json.JSONDecodeError:
+            return jsonify({'error': 'Invalid backup file format.'}), 500
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     request_id = f"{player_name}_{int(time.time())}"
     event = threading.Event()
