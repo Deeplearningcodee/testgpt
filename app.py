@@ -66,11 +66,12 @@ def ask_gpt():
     execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'
     visual = ''
     try:
-        execute_response = requests.post(execute_server_url, json={'request_id': request_id}, timeout=5)
+        execute_response = requests.post(execute_server_url, json={'request_id': request_id}, timeout=7)
         if execute_response.status_code == 200:
             response_data = execute_response.json()
             if isinstance(response_data, list) and len(response_data) > 0:
                 visual = response_data[0].get('visual', '')
+                print('visual : ', visual)
         else:
             print('Execute server responded with status code:', execute_response.status_code)
     except requests.RequestException as e:
