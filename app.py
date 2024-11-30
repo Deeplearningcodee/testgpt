@@ -3,7 +3,6 @@
 import time
 import threading
 from flask import Flask, request, jsonify
-from inference_sdk import InferenceHTTPClient
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
@@ -17,14 +16,8 @@ SAVE_DIR = "received_images"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 load_dotenv()
-INFERENCE_API_KEY = os.getenv("INFERENCE_API_KEY")
-if not INFERENCE_API_KEY:
-    raise ValueError("INFERENCE_API_KEY is not set.")
 
-client_inference = InferenceHTTPClient(
-    api_url="https://detect.roboflow.com",
-    api_key=INFERENCE_API_KEY
-)
+
 
 # Configure Gemini API
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
