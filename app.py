@@ -34,6 +34,16 @@ pending_events = {}
 @app.route('/ask_gpt', methods=['POST'])
 def ask_gpt():
     data = request.json
+    
+    # Handle the case where data is a list
+    if isinstance(data, list):
+        if len(data) > 0 and isinstance(data[0], dict):
+            data = data[0]
+            print("Received data as list. Using the first item.")
+        else:
+            return jsonify({'error': 'Invalid data format. Expected a dictionary.'}), 400
+    
+    # Now, data should be a dictionary
     question = data.get('question')
     player_name = data.get('playerName', 'Unknown')
 
@@ -66,7 +76,7 @@ def ask_gpt():
     execute_server_url = 'https://38017396-7be9c047-0074-423e-a4b5-0fc291cd4442.socketxp.com/execute'
     visual = ''
     try:
-        execute_response = requests.post(execute_server_url, json={'request_id': request_id}, timeout=7)
+        execute_response = requests.post(execute_server_url, json={'request_id': request_id}, timeout=10)
         if execute_response.status_code == 200:
             response_data = execute_response.json()
             if isinstance(response_data, list) and len(response_data) > 0:
