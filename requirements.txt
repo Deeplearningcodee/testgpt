@@ -1,6 +1,6 @@
 flask
-openai
 python-dotenv
 requests
 gunicorn
 inference-cli
+google-generativeai
