@@ -29,8 +29,8 @@ def decode_image(base64_image):
     return base64.b64decode(base64_image)
 
 def call_groq_api(prompt_data):
-    api_key = "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"
-    client = Groq(api_key=api_key)
+    
+    client = Groq(api_key=os.getenv("GROQ_API"))
     
     chat_completion = client.chat.completions.create(
         model="llama-3.2-11b-vision-preview",
