@@ -3,12 +3,13 @@
 import time
 import threading
 from flask import Flask, request, jsonify
-import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
 import requests
 import re  # Import regex module
+import base64
+from groq import Groq
 
 app = Flask(__name__)
 
@@ -17,15 +18,31 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 
 load_dotenv()
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
 PROMPT_FILE = 'prompt_file.json'
 BACKUP_FILE = 'backup_file.json'
 
 def load_backup_data():
     with open(BACKUP_FILE, 'r') as file:
         return json.load(file)
+
+def decode_image(base64_image):
+    return base64.b64decode(base64_image)
+
+def call_groq_api(prompt_data):
+    api_key = "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"
+    client = Groq(api_key=api_key)
+    
+    chat_completion = client.chat.completions.create(
+        model="llama-3.2-11b-vision-preview",
+        messages=prompt_data,
+        temperature=1,
+        max_tokens=1024,
+        top_p=1,
+        stream=False,
+        stop=None,
+    )
+    
+    return chat_completion.choices[0].message.to_dict()
 
 pending_requests = {}
 pending_responses = {}
@@ -80,8 +97,31 @@ def ask_gpt():
         if execute_response.status_code == 200:
             response_data = execute_response.json()
             if isinstance(response_data, list) and len(response_data) > 0:
-                visual = response_data[0].get('visual', '')
-                print('visual : ', visual)
+                encoded_image = response_data[0].get('encodedImage', '')
+                
+                
+                if encoded_image:
+                   
+                    # Prepare the user's question with the image for the first API call
+                    user_question_with_image = {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "describe the image max 200 characters"},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded_image}",
+                                },
+                            },
+                        ],
+                    }
+                    
+                    # Call the Groq API to describe the image
+                    image_description_reply = call_groq_api([user_question_with_image])
+                    
+                    # Extract the description from the assistant's response
+                    image_description = image_description_reply.get("content", "No description available.")
+                    visual = image_description
         else:
             print('Execute server responded with status code:', execute_response.status_code)
     except requests.RequestException as e:
@@ -104,57 +144,12 @@ def ask_gpt():
         "content": prompt_content
     })
 
-    # Construct the history as an ordered list of messages
-    history = []
-    for msg in prompt_data:
-        role = msg.get("role")
-        content = msg.get("content", "").strip()
-        if role in ["user", "assistant"] and content:
-            history.append({
-                "role": role,
-                "parts": [content]
-            })
-
-    # Create the model
-    generation_config = {
-        "temperature": 1,
-        "top_p": 0.95,
-        "top_k": 40,
-        "max_output_tokens": 150,
-        "response_mime_type": "text/plain",
-    }
-
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config=generation_config,
-    )
-
-    # Initialize chat session with history
-    try:
-        chat_session = model.start_chat(history=history)
-    except Exception as e:
-        print(f"Error initializing chat session: {e}")
-        return jsonify({'error': 'Failed to initialize chat session.'}), 500
-
-    # Send message to Gemini
-    try:
-        response = chat_session.send_message(prompt_content)
-        gpt_response = response.text.strip()
-
-        # Remove ```json and ``` if present
-        gpt_response = re.sub(r'^```json\s*', '', gpt_response, flags=re.MULTILINE)
-        gpt_response = re.sub(r'```\s*$', '', gpt_response, flags=re.MULTILINE).strip()
-
-    except Exception as e:
-        print(f"Error during Gemini request: {e}")
-        return jsonify({'error': 'Failed to get response from Gemini.'}), 500
-
-    # Append Gemini's response to the prompt data
-    prompt_data.append({
-        "role": "assistant",
-        "content": gpt_response
-    })
-
+    # Call the Groq API with the updated prompt data
+    assistant_reply = call_groq_api(prompt_data)
+    
+    # Append the assistant's response to the prompt data
+    prompt_data.append(assistant_reply)
+    
     # Save the updated prompt data back to the file
     try:
         with open(PROMPT_FILE, 'w') as file:
@@ -164,12 +159,12 @@ def ask_gpt():
         print(f"Error saving response: {e}")
         return jsonify({'error': 'Failed to save response.'}), 500
 
-    pending_responses[request_id] = gpt_response
+    pending_responses[request_id] = assistant_reply.get("content", "")
     event = pending_events.get(request_id)
     if event:
         event.set()
 
-    return jsonify({'response': gpt_response})
+    return jsonify({'response': assistant_reply.get("content", "")})
 
 if __name__ == '__main__':
     app.run(debug=True)
