@@ -135,7 +135,7 @@ def ask_gpt():
                     user_question_with_image = {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": f"{player_name}: {question}. max 200 characters answer based on the image." },
+                            {"type": "text", "text": f"{player_name}: {question}. max 200 characters answer based on the image."},
                             {
                                 "type": "image_url",
                                 "image_url": {
@@ -151,6 +151,9 @@ def ask_gpt():
                     # Extract the description from the assistant's response
                     response_data = image_response.get("content", "No description available.")
                     
+                    #turn the response data into a json object"{\n\"text\": \"Moving forward.\",\n\"command\": \"move_forward\",\n\"target\": \"Anomic_AD\"\n}" text value is the response data and the command is nill and the target is the player name
+                    response_data = f"{{\n\"text\": \"{response_data}\",\n\"command\": \"nill\",\n\"target\": \"{player_name}\"\n}}"
+                    print("Response data:", response_data)
                     # Append the user's question and response in prompt data
                     with open(PROMPT_FILE, 'r') as file:
                         prompt_data = json.load(file)
@@ -168,16 +171,10 @@ def ask_gpt():
                         json.dump(prompt_data, file, indent=4)
 
                     # make json with field text and value would be response data
-                    response_data = {
-                        "text": response_data,
-                        "command": "nill",
-                        "target": player_name
-                    }
-                    response_json = json.dumps(response_data, indent=4)
                     
-                    pending_responses[request_id] = response_json
+                    pending_responses[request_id] = response_data
                     event.set()
-                    return jsonify({'response': response_json})
+                    return jsonify({'response': response_data})
                 
             
         except requests.exceptions.RequestException as e:
