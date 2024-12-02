@@ -43,8 +43,7 @@ def call_groq_api(prompt_data, model="llama-3.2-11b-vision-preview"):
     return chat_completion.choices[0].message.to_dict()
 
 def determine_model(question, player_name):
-    api_key = "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"
-    client = Groq(api_key=api_key)
+    client = Groq(api_key=os.getenv("GROQ_API"))
     
     prompt_data = [
         {
