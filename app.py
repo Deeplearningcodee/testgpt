@@ -47,7 +47,7 @@ def determine_model(question, player_name):
     prompt_data = [
         {
             "role": "system",
-            "content": "you only answer with 'yes' or 'no'  to determine based on the question if the image model should be used example if question is 'what do you see?' the answer should be 'yes' another example if question is 'how many players you see?' the answer should be 'yes' and if question is 'what is the best strategy?' the answer should be 'no' and if question is 'how can I improve my gameplay?' the answer should be 'no' and if question is 'what game am I playing?' the answer should be 'yes'"
+            "content": "you only answer with 'yes' or 'no'  to determine based on the question if the image model should be used example if question is 'what do you see?' the answer should be 'yes' another example if question is 'how many players you see?' the answer should be 'yes' and if question is 'what is the best strategy?' the answer should be 'no' and if question is 'how can I improve my gameplay?' the answer should be 'no' and if question is 'what game am I playing?' the answer should be 'yes' if questions is 'what is 2+2 ?' the answer should be 'no'"
         },
         {
             "role": "user",
@@ -168,13 +168,16 @@ def ask_gpt():
                         json.dump(prompt_data, file, indent=4)
 
                     # make json with field text and value would be response data
-                    response_data = {"text": response_data}
-                    print("response_data:", response_data)
-
-
-                    pending_responses[request_id] = response_data
+                    response_data = {
+                        "text": response_data,
+                        "command": "nill",
+                        "target": player_name
+                    }
+                    response_json = json.dumps(response_data, indent=4)
+                    
+                    pending_responses[request_id] = response_json
                     event.set()
-                    return jsonify({'response': response_data})
+                    return jsonify({'response': response_json})
                 
             
         except requests.exceptions.RequestException as e:
@@ -217,7 +220,6 @@ def ask_gpt():
         event = pending_events.get(request_id)
         if event:
             event.set()
-
         return jsonify({'response': assistant_reply.get("content", "")})
 
 if __name__ == '__main__':
